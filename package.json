@@ -8,6 +8,7 @@
     "start": "node src/index.js",
     "test": "node --test test/*.test.js",
     "demo": "node src/demo.js",
+    "demo:dry": "node src/demo-dry.js",
     "dashboard": "cd dashboard && npx serve -s build"
   },
   "keywords": ["agent", "treasury", "moonpay", "ows", "defi", "wallet"],

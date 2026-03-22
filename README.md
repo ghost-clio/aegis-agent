@@ -67,6 +67,9 @@ git clone https://github.com/ghost-clio/aegis-agent.git
 cd aegis-agent
 npm install
 
+# Dry run demo (zero credentials, zero network calls — pure logic)
+npm run demo:dry
+
 # Run in testnet mode (safe experimentation — no real funds)
 AEGIS_ENV=testnet npm run demo
 
@@ -77,7 +80,7 @@ npm test
 npm start
 ```
 
-> **Testnet Mode:** Set `AEGIS_ENV=testnet` to route all chains to testnets automatically. Ethereum → Sepolia, Base → Base Sepolia, Arbitrum → Arbitrum Sepolia, etc. Same code, same policies, zero risk. Judges: try this first.
+> **🎯 Judges:** Run `npm run demo:dry` first — shows the entire policy engine, gas oracle, strategy logic, and decision trace with zero setup. Then try `AEGIS_ENV=testnet npm start` for testnet mode.
 
 ### MCP Configuration
 
