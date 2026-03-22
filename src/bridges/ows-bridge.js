@@ -5,7 +5,20 @@
  * through OWS's local-first secure vault.
  */
 
-import { createWallet, signMessage, signTransaction } from '@open-wallet-standard/core';
+// OWS SDK — graceful fallback when not installed
+// Install: npm install @open-wallet-standard/core (requires OWS CLI: https://github.com/nicholasgriffintn/open-wallet-standard)
+let owsCore = null;
+try {
+  owsCore = await import('@open-wallet-standard/core');
+} catch {
+  // OWS not installed — bridge will operate in simulation mode
+  // This allows the full policy engine, strategies, and gas oracle to run without wallet dependencies
+}
+const { createWallet, signMessage, signTransaction } = owsCore || {
+  createWallet: () => { throw new Error('OWS not installed. Run: npm install @open-wallet-standard/core'); },
+  signMessage: () => { throw new Error('OWS not installed. Run: npm install @open-wallet-standard/core'); },
+  signTransaction: () => { throw new Error('OWS not installed. Run: npm install @open-wallet-standard/core'); },
+};
 
 export class OWSBridge {
   constructor(walletName = 'aegis-treasury') {

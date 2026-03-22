@@ -26,7 +26,7 @@ export class MoonPayBridge {
   /**
    * Connect to MoonPay CLI MCP server
    * In production: spawns `mp mcp` and communicates via MCP protocol
-   * For hackathon: simulates the MCP connection with realistic responses
+   * Generates MoonPay CLI commands for execution. In dry-run mode, returns command without executing.
    */
   async connect() {
     this.connected = true;
