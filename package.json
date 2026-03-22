@@ -1,0 +1,20 @@
+{
+  "name": "aegis-agent",
+  "version": "1.0.0",
+  "description": "Self-governing agent treasury — OWS wallet security + MoonPay CLI execution layer",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test test/*.test.js",
+    "demo": "node src/demo.js",
+    "dashboard": "cd dashboard && npx serve -s build"
+  },
+  "keywords": ["agent", "treasury", "moonpay", "ows", "defi", "wallet"],
+  "author": "ghost-clio",
+  "license": "MIT",
+  "dependencies": {
+    "@open-wallet-standard/core": "^0.3.9"
+  },
+  "devDependencies": {}
+}
