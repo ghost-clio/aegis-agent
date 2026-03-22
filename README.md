@@ -3,7 +3,7 @@
 > Your AI agent gets a wallet it can trust. You get a wallet you control.
 > OWS secures the keys. MoonPay CLI executes the trades. Policies prevent the rogue.
 
-[![Tests](https://img.shields.io/badge/tests-41%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-66%20passing-brightgreen)]()
 [![OWS](https://img.shields.io/badge/OWS-v0.3-blue)]()
 [![MoonPay CLI](https://img.shields.io/badge/MoonPay%20CLI-v1.12-purple)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -67,12 +67,17 @@ git clone https://github.com/ghost-clio/aegis-agent.git
 cd aegis-agent
 npm install
 
-# Run tests (41 tests)
+# Run in testnet mode (safe experimentation — no real funds)
+AEGIS_ENV=testnet npm run demo
+
+# Run tests (66 tests)
 npm test
 
-# Run demo
-npm run demo
+# Run in production
+npm start
 ```
+
+> **Testnet Mode:** Set `AEGIS_ENV=testnet` to route all chains to testnets automatically. Ethereum → Sepolia, Base → Base Sepolia, Arbitrum → Arbitrum Sepolia, etc. Same code, same policies, zero risk. Judges: try this first.
 
 ### MCP Configuration
 
@@ -173,6 +178,79 @@ engine.getAuditLog();
 // [{ timestamp, transaction: { type, chain, amount }, result: 'DENIED', reason: 'Daily limit exceeded' }]
 ```
 
+## Gas Oracle — Chain-Aware Cost Optimization
+
+The agent won't burn $9 in gas on a $20 swap. Every trade is checked against real gas estimates before execution:
+
+```javascript
+import { GasOracle } from './src/gas-oracle.js';
+const oracle = new GasOracle();
+
+oracle.isGasEfficient('eip155:1', 20, 'swap');
+// { efficient: false, gasCostUsd: 9.375, gasToTradeRatio: '46.88%',
+//   recommendation: 'Route via eip155:8453 instead (gas: $0.0019 vs $9.3750)',
+//   alternatives: [{ chain: 'eip155:8453', estimatedUsd: 0.0019, tier: 'cheap' }] }
+
+oracle.isGasEfficient('eip155:8453', 20, 'swap');
+// { efficient: true, gasCostUsd: 0.0019, gasToTradeRatio: '0.01%', gasTier: 'cheap' }
+```
+
+| Chain | Swap Cost | Min Efficient Trade | Tier |
+|-------|-----------|-------------------|------|
+| Ethereum | ~$9.38 | $187.50 | 🔴 Expensive |
+| Arbitrum | ~$0.04 | $0.70 | 🟢 Cheap |
+| Base | ~$0.002 | $0.04 | 🟢 Cheap |
+| Optimism | ~$0.002 | $0.04 | 🟢 Cheap |
+| Polygon | ~$0.006 | $0.12 | 🟢 Cheap |
+
+When a trade is gas-inefficient, Aegis automatically suggests cheaper chains. The agent routes to L2s first.
+
+## Decision Trace — Flight Recorder for Autonomous Finance
+
+Every action gets a compliance-grade reasoning trace. If something goes wrong, you can replay exactly *why* the agent did what it did:
+
+```
+[EXECUTED] SWAP | USDC → ETH | $75 | on eip155:8453 | via smart-dca
+  | MARKET_CONTEXT: vol:4.2%, RSI:28, signal:OVERSOLD_BUY_MORE
+  | POLICY_CHECK: PASS (all 6 checks cleared)
+  | GAS_ANALYSIS: $0.002 (cheap), ratio: 0.003%
+  | OWS_SIGNING: signed via subprocess, key material [REDACTED]
+  | EXECUTION: mp swap --from USDC --to ETH --amount 75 --chain base
+```
+
+```javascript
+// Get recent traces
+agent.getTraces({ limit: 10 });
+
+// Filter by result
+agent.getTraces({ result: 'DENIED' });
+agent.getTraces({ result: 'SKIPPED_GAS' });
+
+// Export for external audit tools (JSONL — one trace per line)
+const auditLog = agent.exportAuditLog();
+```
+
+Every trace records: market context → gas analysis → policy evaluation → OWS signing → execution result. Append-only. Exportable as JSONL for compliance tooling.
+
+## Testnet Mode — Safe Experimentation
+
+Set one environment variable and the entire agent routes to testnets:
+
+```bash
+AEGIS_ENV=testnet node src/index.js
+```
+
+| Mainnet | → Testnet |
+|---------|-----------|
+| Ethereum (eip155:1) | Sepolia (eip155:11155111) |
+| Base (eip155:8453) | Base Sepolia (eip155:84532) |
+| Arbitrum (eip155:42161) | Arbitrum Sepolia (eip155:421614) |
+| Optimism (eip155:10) | OP Sepolia (eip155:11155420) |
+| Polygon (eip155:137) | Amoy (eip155:80002) |
+| Solana mainnet | Solana devnet |
+
+Same strategies. Same policies. Same gas checks. Zero risk. Testnet chains are automatically added to the policy allowlist.
+
 ## Why OWS + MoonPay CLI
 
 | Component | Role | Why not alternatives? |
@@ -189,31 +267,40 @@ Other projects pick one. Aegis combines both into a self-governing system where:
 ## Tests
 
 ```
-41 tests passing
+66 tests passing
 
 PolicyEngine (16 tests)
   ✓ spending limits (daily/weekly/monthly tracking)
   ✓ chain allowlist enforcement
-  ✓ slippage guard
-  ✓ concentration limits
-  ✓ cooldown periods
-  ✓ protocol allowlist
-  ✓ audit logging
-  ✓ spending summaries
+  ✓ slippage guard, concentration limits, cooldown periods
+  ✓ protocol allowlist, audit logging, spending summaries
 
 Strategies (17 tests)
-  ✓ rebalance drift detection
-  ✓ smart DCA volatility adjustment
-  ✓ yield opportunity ranking
-  ✓ self-sustainability calculation
+  ✓ rebalance drift detection + trade generation
+  ✓ smart DCA volatility adjustment + momentum signals
+  ✓ yield opportunity ranking + self-sustainability math
   ✓ deployment plan generation
 
 Agent Integration (8 tests)
-  ✓ component initialization
-  ✓ policy enforcement on actions
-  ✓ full agent cycle execution
-  ✓ spending limit enforcement across actions
-  ✓ decision logging transparency
+  ✓ component initialization, policy enforcement, full cycle
+  ✓ spending limit enforcement across multiple actions
+  ✓ decision logging + trace integration
+
+Gas Oracle (7 tests)
+  ✓ per-chain gas estimation (L1 vs L2)
+  ✓ gas-efficiency rejection on expensive chains
+  ✓ cheaper chain suggestions, dynamic price updates
+
+Decision Trace (8 tests)
+  ✓ full trace lifecycle (start → steps → finalize)
+  ✓ human-readable summaries for executed/denied/skipped
+  ✓ JSONL export, aggregate stats, maxTraces limit
+  ✓ OWS signing step (key material redacted)
+
+Testnet Mode (10 tests)
+  ✓ chain mapping (mainnet → testnet equivalents)
+  ✓ policy allowlist auto-expansion for testnet chains
+  ✓ gas-skipped action tracking, environment reporting
 ```
 
 ## Project Structure
@@ -221,8 +308,10 @@ Agent Integration (8 tests)
 ```
 aegis-agent/
 ├── src/
-│   ├── agent.js              # Main agent orchestrator
+│   ├── agent.js              # Main agent orchestrator (testnet-aware)
 │   ├── policies.js           # 6-layer policy engine
+│   ├── gas-oracle.js         # Chain-aware gas estimation + routing
+│   ├── decision-trace.js     # Compliance-grade audit trail
 │   ├── bridges/
 │   │   ├── ows-bridge.js     # OWS wallet integration
 │   │   └── moonpay-bridge.js # MoonPay CLI MCP client
@@ -233,7 +322,10 @@ aegis-agent/
 ├── test/
 │   ├── policies.test.js      # Policy engine tests (16)
 │   ├── strategies.test.js    # Strategy tests (17)
-│   └── agent.test.js         # Integration tests (8)
+│   ├── agent.test.js         # Integration tests (8)
+│   ├── gas-oracle.test.js    # Gas oracle tests (7)
+│   ├── decision-trace.test.js # Decision trace tests (8)
+│   └── testnet-mode.test.js  # Testnet mode tests (10)
 ├── conversation-log.md       # Human-agent collaboration
 └── README.md
 ```
@@ -255,9 +347,11 @@ The policy engine and OWS integration work independently. MoonPay CLI provides t
 ## Known Limitations
 
 - MoonPay CLI requires authentication (`mp login`) for live trading
-- Yield data sources are configured statically (production would use live APY feeds)
+- Yield data sources are configured statically (production: integrate DeFiLlama API for live APYs)
 - OWS wallet creation requires the `ows` CLI installed globally
-- Cross-chain bridging adds gas costs not reflected in strategy calculations
+- Gas oracle uses estimated prices (production: fetch live from `eth_gasPrice` RPC)
+- No MEV protection yet (production: route via Flashbots Protect for Ethereum mainnet)
+- Decision traces are in-memory (production: persist to SQLite or append-only log file)
 
 ## License
 

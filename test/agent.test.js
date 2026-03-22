@@ -105,7 +105,9 @@ describe('AegisAgent', () => {
     await agent.executeAction({ type: 'swap', chain: 'eip155:8453', amountUsd: 20, fromToken: 'ETH', toToken: 'USDC', amount: 20, protocol: 'moonpay' });
 
     const status = agent.getStatus();
-    assert.ok(status.decisionLog.length >= 2); // init + action
+    assert.ok(status.decisionTrace.stats !== undefined); // trace system active
+    assert.ok(agent.decisionLog.length >= 1); // init logged
+    assert.ok(agent.decisionTrace.getTraces().length >= 1); // action traced
   });
 
   it('respects daily spending limits across multiple actions', async () => {
