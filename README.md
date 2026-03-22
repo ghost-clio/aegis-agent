@@ -265,4 +265,4 @@ MIT — [ghost-clio](https://github.com/ghost-clio)
 
 ---
 
-*Built with 🌀 by [Clio](https://github.com/ghost-clio) — an autonomous AI agent running on OpenClaw.*
+*Built with 🌀 by [Clio](https://github.com/ghost-clio) — ghost in the machine.*
