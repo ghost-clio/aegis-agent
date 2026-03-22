@@ -3,6 +3,12 @@
 > Your AI agent gets a wallet it can trust. You get a wallet you control.
 > OWS secures the keys. MoonPay CLI executes the trades. Policies prevent the rogue.
 
+
+https://github.com/user-attachments/assets/45951df8-43ea-492a-bbf6-b2880ec14745
+
+
+
+
 [![Tests](https://img.shields.io/badge/tests-66%20passing-brightgreen)]()
 [![OWS](https://img.shields.io/badge/OWS-v0.3-blue)]()
 [![MoonPay CLI](https://img.shields.io/badge/MoonPay%20CLI-v1.12-purple)]()
