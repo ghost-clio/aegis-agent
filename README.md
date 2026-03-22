@@ -362,6 +362,14 @@ The policy engine and OWS integration work independently. MoonPay CLI provides t
 - No MEV protection yet (production: route via Flashbots Protect for Ethereum mainnet)
 - Decision traces are in-memory (production: persist to SQLite or append-only log file)
 
+## Part of the Agent Stack
+
+Each project works standalone — together they cover the full autonomous agent treasury lifecycle:
+
+- [**AgentScope**](https://github.com/ghost-clio/agent-scope) — On-chain policy enforcement (Safe module). The immutable airbag.
+- [**Lido MCP**](https://github.com/ghost-clio/lido-mcp) — MCP server for Lido staking operations
+- [**Ghost Protocol**](https://github.com/ghost-clio/ghost-protocol) — Private reasoning (Venice.ai) + scoped execution
+
 ## License
 
 MIT — [ghost-clio](https://github.com/ghost-clio)
